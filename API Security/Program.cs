@@ -34,14 +34,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 //// Configure Identity services
-//        builder.Services.AddDefaultIdentity<IdentityUser>(options =>
-//        {
-//            options.SignIn.RequireConfirmedAccount = false;
+builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
 
-//            //password
-//          //  options.l
-//        })
-//    .AddEntityFrameworkStores<AppDbContext>();
+    //password lockout
+    options.Lockout.AllowedForNewUsers = true;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 3;
+})
+.AddEntityFrameworkStores<AppDbContext>();
 
 
 var app = builder.Build();

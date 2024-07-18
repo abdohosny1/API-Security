@@ -17,6 +17,9 @@ namespace API_Security.Controllers
             _userManager = userManager;
         }
 
+        [HttpPost]
+        public async Task<IActionResult> Register([FromBody] )
+
         //    [HttpPost]
 
         //    public async Task<IActionResult> Login([FromBody] LoginUserDto loginUserDto)
