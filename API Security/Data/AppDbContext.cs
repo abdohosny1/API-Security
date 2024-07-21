@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using API_Security.Models;
 
 namespace API_Security.Data
 {
@@ -10,5 +11,7 @@ namespace API_Security.Data
             : base(options)
         {
         }
+
+        public DbSet<Team> Teams { get; set; }
     }
 }
