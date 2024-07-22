@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text;
 using API_Security.Configuration;
+using API_Security.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,7 +47,7 @@ builder.Services.AddAuthentication(option =>
     });
 
 //// Configure Identity services
-builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+builder.Services.AddDefaultIdentity<User>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
 
@@ -59,7 +60,8 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     options.SignIn.RequireConfirmedEmail = true;
     options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
 })
-.AddEntityFrameworkStores<AppDbContext>();
+.AddEntityFrameworkStores<AppDbContext>()
+.AddPasswordValidator<PasswordValidator<User>>();
 
 
 var app = builder.Build();

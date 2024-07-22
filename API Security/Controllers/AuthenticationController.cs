@@ -1,5 +1,7 @@
 ﻿using API_Security.Dto;
+using API_Security.enums;
 using API_Security.helper;
+using API_Security.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,10 +17,10 @@ namespace API_Security.Controllers
     [ApiController]
     public class AuthenticationController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
 
-        public AuthenticationController(UserManager<IdentityUser> userManager, IConfiguration configuration)
+        public AuthenticationController(UserManager<User> userManager, IConfiguration configuration)
         {
             _userManager = userManager;
             _configuration = configuration;
@@ -45,16 +47,20 @@ namespace API_Security.Controllers
                     });
                 }
                 //create new user
-                var new_user = new IdentityUser()
+                var new_user = new User()
                 {
                     Email = userRegistractionrDto.Email,
-                    UserName = userRegistractionrDto.Email
+                    UserName = userRegistractionrDto.Email,
+                    Age=userRegistractionrDto.Age
                 };
 
                 var is_created=await _userManager.CreateAsync(new_user, userRegistractionrDto.Password);
 
                 if (is_created.Succeeded)
                 {
+
+                    //asgin role to the user
+                    await _userManager.AddToRoleAsync(new_user, RolesModel.Team.ToString());
 
                     //require email confirmation
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(new_user);
@@ -186,8 +192,10 @@ namespace API_Security.Controllers
 
                 }
 
+                var roles = await _userManager.GetRolesAsync(existing_user);
+
                 await _userManager.ResetAccessFailedCountAsync(existing_user);
-                var jwt_token = GenerateJwtToken(existing_user);
+                var jwt_token = GenerateJwtToken(existing_user, roles);
 
                 return Ok(new AuthResult()
                 {
@@ -268,7 +276,7 @@ namespace API_Security.Controllers
 
         }
 
-        private string GenerateJwtToken(IdentityUser user)
+        private string GenerateJwtToken(IdentityUser user,IList<string> roles)
         {
             var jwt_token_handler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(_configuration.GetSection("jwtConfig:secret").Value);
@@ -280,6 +288,8 @@ namespace API_Security.Controllers
             claim_list.Add(new Claim(JwtRegisteredClaimNames.Email, user.Email));
             claim_list.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
             claim_list.Add(new Claim(JwtRegisteredClaimNames.Iat, DateTime.Now.ToUniversalTime().ToString()));
+
+            claim_list.AddRange(roles.Select(role=> new Claim(ClaimTypes.Role,role)));
 
             var token_descriptor = new SecurityTokenDescriptor()
             {
