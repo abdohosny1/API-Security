@@ -201,7 +201,72 @@ namespace API_Security.Controllers
 
         }
 
+        [HttpPost]
+        [Route("ForgotPassword")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
+        {
+            if (ModelState.IsValid)
+            {
+                //check user
+                var user = await _userManager.FindByEmailAsync(forgotPasswordDto.Email);
 
+                if (user == null)
+                {
+                    return BadRequest(new AuthResult()
+                    {
+                        Errors = new List<string>()
+                            {
+                                "Invalid payload"
+                            },
+                        Success = false
+                    });
+                }
+
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                if (string.IsNullOrEmpty(token))
+                {
+                    return BadRequest("some thing went wrong");
+                }
+
+                var call_back_url = $"http://localhost:9999/restpass?code={token}&email={user.Email}";
+
+                //send emaill
+                return Ok(new
+                {
+                    token = token,
+                    email = user.Email
+                });
+            }
+            return BadRequest("invalid payload");
+
+        }
+
+        [HttpPost]
+        [Route("ResetPassword")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordRequestDto requestDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest("invalid payload");
+
+            //check user
+            var user = await _userManager.FindByEmailAsync(requestDto.Email);
+
+            if (user == null)
+            {
+                return BadRequest("Invalid payload");
+            }
+
+            var result = await _userManager.ResetPasswordAsync(user, requestDto.Token, requestDto.Password);
+
+            if (result.Succeeded)
+            {
+                return Ok("password reset is successfuly");
+            }
+            return BadRequest("some thing went wrong");
+
+
+
+        }
 
         private string GenerateJwtToken(IdentityUser user)
         {
